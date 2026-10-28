@@ -1,0 +1,657 @@
+[INFO] [1793183589.038509553] [ep_check]: CONNECTED. Firmware: 01.01.1150
+{
+  "battery_percent": {
+    "status": "NO_DATA"
+  },
+  "esc_raw": {
+    "status": "LIVE",
+    "age_s": 0.21,
+    "value": [
+      [
+        1,
+        -2,
+        -1,
+        -1
+      ],
+      [
+        12484,
+        11846,
+        6726,
+        12471
+      ],
+      [
+        975186,
+        975181,
+        975183,
+        975184
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "imu_raw": {
+    "status": "LIVE",
+    "age_s": 0.19,
+    "value": [
+      0.00388,
+      -0.00238,
+      -0.99307,
+      0.00667,
+      0.00441,
+      0.00329
+    ]
+  },
+  "yaw_pitch_roll_deg": {
+    "status": "LIVE",
+    "age_s": 0.27,
+    "value": [
+      -100.2,
+      0.72,
+      3.16
+    ]
+  },
+  "position_raw": {
+    "status": "LIVE",
+    "age_s": 0.27,
+    "value": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "velocity_raw": {
+    "status": "NO_DATA"
+  },
+  "chassis_status_raw": {
+    "status": "NO_DATA"
+  },
+  "tof_mm": {
+    "status": "NO_DATA"
+  },
+  "arm_xy_mm": {
+    "status": "NO_DATA"
+  },
+  "servo_raw": {
+    "status": "NO_DATA"
+  },
+  "gripper_status": {
+    "status": "NO_DATA"
+  }
+}
+{
+  "battery_percent": {
+    "status": "LIVE",
+    "age_s": 0.44,
+    "value": 84
+  },
+  "esc_raw": {
+    "status": "LIVE",
+    "age_s": 0.19,
+    "value": [
+      [
+        3,
+        0,
+        1,
+        2
+      ],
+      [
+        12483,
+        11848,
+        6727,
+        12470
+      ],
+      [
+        975786,
+        975781,
+        975783,
+        975784
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "imu_raw": {
+    "status": "LIVE",
+    "age_s": 0.18,
+    "value": [
+      0.00524,
+      -0.0015,
+      -0.99403,
+      0.00546,
+      0.00209,
+      -0.00188
+    ]
+  },
+  "yaw_pitch_roll_deg": {
+    "status": "LIVE",
+    "age_s": 0.18,
+    "value": [
+      -100.2,
+      0.72,
+      3.15
+    ]
+  },
+  "position_raw": {
+    "status": "LIVE",
+    "age_s": 0.18,
+    "value": [
+      2e-05,
+      -3e-05,
+      0.0
+    ]
+  },
+  "velocity_raw": {
+    "status": "LIVE",
+    "age_s": 0.18,
+    "value": [
+      0.0,
+      -0.0,
+      0,
+      0.0,
+      0.0,
+      0
+    ]
+  },
+  "chassis_status_raw": {
+    "status": "LIVE",
+    "age_s": 0.19,
+    "value": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tof_mm": {
+    "status": "LIVE",
+    "age_s": 0.19,
+    "value": [
+      834,
+      0,
+      0,
+      0
+    ]
+  },
+  "arm_xy_mm": {
+    "status": "LIVE",
+    "age_s": 0.19,
+    "value": [
+      70,
+      53
+    ]
+  },
+  "servo_raw": {
+    "status": "LIVE",
+    "age_s": 0.18,
+    "value": [
+      [
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        65,
+        0,
+        0,
+        0
+      ],
+      [
+        1305,
+        1023,
+        0,
+        0
+      ]
+    ]
+  },
+  "gripper_status": {
+    "status": "LIVE",
+    "age_s": 0.18,
+    "value": "normal"
+  }
+}
+[INFO] [1793183591.538296030] [ep_check]: FORWARD TEST: all wheels commanded to 20 RPM
+{
+  "battery_percent": {
+    "status": "LIVE",
+    "age_s": 0.48,
+    "value": 84
+  },
+  "esc_raw": {
+    "status": "LIVE",
+    "age_s": 0.04,
+    "value": [
+      [
+        1,
+        1,
+        2,
+        -1
+      ],
+      [
+        12485,
+        11845,
+        6726,
+        12471
+      ],
+      [
+        976518,
+        976513,
+        976515,
+        976516
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "imu_raw": {
+    "status": "LIVE",
+    "age_s": 0.02,
+    "value": [
+      0.00501,
+      -0.00152,
+      -0.99359,
+      0.00808,
+      0.00146,
+      -0.00147
+    ]
+  },
+  "yaw_pitch_roll_deg": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      -100.2,
+      0.72,
+      3.16
+    ]
+  },
+  "position_raw": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      5e-05,
+      3e-05,
+      0.0
+    ]
+  },
+  "velocity_raw": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      0.0,
+      0.0,
+      0,
+      -0.0,
+      0.0,
+      0
+    ]
+  },
+  "chassis_status_raw": {
+    "status": "LIVE",
+    "age_s": 0.08,
+    "value": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tof_mm": {
+    "status": "LIVE",
+    "age_s": 0.06,
+    "value": [
+      830,
+      0,
+      0,
+      0
+    ]
+  },
+  "arm_xy_mm": {
+    "status": "LIVE",
+    "age_s": 0.04,
+    "value": [
+      70,
+      53
+    ]
+  },
+  "servo_raw": {
+    "status": "LIVE",
+    "age_s": 0.02,
+    "value": [
+      [
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        -61,
+        0,
+        0,
+        0
+      ],
+      [
+        1305,
+        1023,
+        0,
+        0
+      ]
+    ]
+  },
+  "gripper_status": {
+    "status": "LIVE",
+    "age_s": 0.2,
+    "value": "normal"
+  }
+}
+{
+  "battery_percent": {
+    "status": "LIVE",
+    "age_s": 0.48,
+    "value": 84
+  },
+  "esc_raw": {
+    "status": "LIVE",
+    "age_s": 0.04,
+    "value": [
+      [
+        20,
+        -14,
+        -16,
+        19
+      ],
+      [
+        22475,
+        1818,
+        29534,
+        22460
+      ],
+      [
+        977130,
+        977125,
+        977127,
+        977128
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "imu_raw": {
+    "status": "LIVE",
+    "age_s": 0.02,
+    "value": [
+      -0.00738,
+      -0.00398,
+      -0.99313,
+      0.01112,
+      0.016,
+      -0.0152
+    ]
+  },
+  "yaw_pitch_roll_deg": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      -100.16,
+      0.49,
+      3.23
+    ]
+  },
+  "position_raw": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      -0.01652,
+      -0.09047,
+      0.0
+    ]
+  },
+  "velocity_raw": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      -0.02,
+      -0.09,
+      0,
+      0.09,
+      -0.0,
+      0
+    ]
+  },
+  "chassis_status_raw": {
+    "status": "LIVE",
+    "age_s": 0.08,
+    "value": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tof_mm": {
+    "status": "LIVE",
+    "age_s": 0.06,
+    "value": [
+      753,
+      0,
+      0,
+      0
+    ]
+  },
+  "arm_xy_mm": {
+    "status": "LIVE",
+    "age_s": 0.04,
+    "value": [
+      70,
+      53
+    ]
+  },
+  "servo_raw": {
+    "status": "LIVE",
+    "age_s": 0.02,
+    "value": [
+      [
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        -29,
+        0,
+        0,
+        0
+      ],
+      [
+        1305,
+        1023,
+        0,
+        0
+      ]
+    ]
+  },
+  "gripper_status": {
+    "status": "LIVE",
+    "age_s": 0.2,
+    "value": "normal"
+  }
+}
+{
+  "battery_percent": {
+    "status": "LIVE",
+    "age_s": 0.47,
+    "value": 84
+  },
+  "esc_raw": {
+    "status": "LIVE",
+    "age_s": 0.05,
+    "value": [
+      [
+        1,
+        -4,
+        1,
+        -1
+      ],
+      [
+        23815,
+        545,
+        28296,
+        23700
+      ],
+      [
+        977742,
+        977737,
+        977739,
+        977740
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "imu_raw": {
+    "status": "LIVE",
+    "age_s": 0.0,
+    "value": [
+      0.00047,
+      -0.00416,
+      -0.99324,
+      0.00808,
+      0.00273,
+      0.00428
+    ]
+  },
+  "yaw_pitch_roll_deg": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      -100.18,
+      0.45,
+      3.19
+    ]
+  },
+  "position_raw": {
+    "status": "LIVE",
+    "age_s": 0.09,
+    "value": [
+      -0.01864,
+      -0.10489,
+      0.0
+    ]
+  },
+  "velocity_raw": {
+    "status": "LIVE",
+    "age_s": 0.1,
+    "value": [
+      0.0,
+      0.01,
+      0,
+      -0.01,
+      -0.0,
+      0
+    ]
+  },
+  "chassis_status_raw": {
+    "status": "LIVE",
+    "age_s": 0.07,
+    "value": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tof_mm": {
+    "status": "LIVE",
+    "age_s": 0.05,
+    "value": [
+      742,
+      0,
+      0,
+      0
+    ]
+  },
+  "arm_xy_mm": {
+    "status": "LIVE",
+    "age_s": 0.03,
+    "value": [
+      70,
+      53
+    ]
+  },
+  "servo_raw": {
+    "status": "LIVE",
+    "age_s": 0.0,
+    "value": [
+      [
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        -25,
+        0,
+        0,
+        0
+      ],
+      [
+        1305,
+        1023,
+        0,
+        0
+      ]
+    ]
+  },
+  "gripper_status": {
+    "status": "LIVE",
+    "age_s": 0.19,
+    "value": "normal"
+  }
+}

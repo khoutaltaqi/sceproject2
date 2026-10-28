@@ -1,0 +1,501 @@
+import json
+import threading
+import time
+from queue import Empty
+import math
+import cv2
+import rclpy
+from cv_bridge import CvBridge
+from rclpy.node import Node
+from robomaster import robot
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+
+
+class EPCheck(Node):
+    def __init__(self):
+        super().__init__('ep_check')
+
+        defaults = {
+            'test': 'connect',
+            'conn_type': 'ap',
+            'seconds': 20.0,
+            'wheel': 1,
+            'target_id': 3,
+            'tag_size_m': 0.080,
+        }
+        for key, value in defaults.items():
+            self.declare_parameter(key, value)
+
+        self.ep = robot.Robot()
+        self.connected = False
+        self.video = False
+        self.chassis_used = False
+        self.gripper_used = False
+
+        self.lock = threading.Lock()
+        self.data = {}
+        self.labels = []
+        self.unsubscribers = []
+        self.next_report = 0.0
+
+        self.bridge = CvBridge()
+        self.status_pub = self.create_publisher(
+            String, '/ep_check/status', 10
+        )
+        self.image_pub = self.create_publisher(
+            Image, '/ep_check/image_raw', 1
+        )
+
+    def p(self, key):
+        return self.get_parameter(key).value
+
+    def connect(self):
+        self.ep.initialize(conn_type=self.p('conn_type'))
+        self.connected = True
+
+        self.get_logger().info(
+            f'CONNECTED. Firmware: {self.ep.get_version()}'
+        )
+
+    def subscribe_sensors(self):
+        specs = [
+            ('battery_percent', 'battery', 'battery_info', 1),
+            ('esc_raw', 'chassis', 'esc', 10),
+            ('imu_raw', 'chassis', 'imu', 10),
+            ('yaw_pitch_roll_deg', 'chassis', 'attitude', 10),
+            ('position_raw', 'chassis', 'position', 10),
+            ('velocity_raw', 'chassis', 'velocity', 10),
+            ('chassis_status_raw', 'chassis', 'status', 5),
+            ('tof_mm', 'sensor', 'distance', 5),
+            ('arm_xy_mm', 'robotic_arm', 'position', 5),
+            ('servo_raw', 'servo', 'servo_info', 5),
+            ('gripper_status', 'gripper', 'status', 5),
+        ]
+
+        for label, module, suffix, freq in specs:
+            self.labels.append(label)
+
+            def callback(value, key=label):
+                with self.lock:
+                    self.data[key] = (time.monotonic(), value)
+
+            try:
+                obj = getattr(self.ep, module)
+                result = getattr(obj, 'sub_' + suffix)(
+                    freq=freq,
+                    callback=callback,
+                )
+
+                if not result:
+                    raise RuntimeError('subscription rejected')
+
+                self.unsubscribers.append(
+                    getattr(obj, 'unsub_' + suffix)
+                )
+
+            except Exception as exc:
+                self.get_logger().warning(f'{label}: {exc}')
+
+    def report(self):
+        now = time.monotonic()
+
+        if now < self.next_report:
+            return
+
+        self.next_report = now + 1.0
+
+        with self.lock:
+            snapshot = dict(self.data)
+
+        result = {}
+
+        for key in self.labels:
+            item = snapshot.get(key)
+
+            if item is None:
+                result[key] = {'status': 'NO_DATA'}
+            else:
+                stamp, value = item
+
+                result[key] = {
+                    'status': (
+                        'LIVE' if now - stamp < 2.5 else 'STALE'
+                    ),
+                    'age_s': round(now - stamp, 2),
+                    'value': value,
+                }
+
+        message = String()
+        message.data = json.dumps(result, default=str)
+
+        if rclpy.ok():
+            self.status_pub.publish(message)
+
+        print(
+            json.dumps(result, indent=2, default=str),
+            flush=True,
+        )
+
+    def wait(self, seconds, command=None):
+        end = time.monotonic() + seconds
+
+        while rclpy.ok() and time.monotonic() < end:
+            if command is not None:
+                if command() is False:
+                    raise RuntimeError('Actuator command rejected')
+
+            self.report()
+            time.sleep(0.05)
+
+    def stop_chassis(self):
+        return self.ep.chassis.drive_wheels(
+            w1=0,
+            w2=0,
+            w3=0,
+            w4=0,
+            timeout=0.3,
+        )
+
+    def drive_planar(self, vx, omega_z):
+        # vx dalam m/s.
+        # omega_z dalam rad/s, positif berlawanan jarum jam.
+        # Parameter geometri mengikuti PDF tugas.
+        wheel_radius = 0.05
+        chassis_radius = 0.20
+
+        right_rad_s = (
+            vx + chassis_radius * omega_z
+        ) / wheel_radius
+
+        left_rad_s = (
+            vx - chassis_radius * omega_z
+        ) / wheel_radius
+
+        right_rpm = round(
+            right_rad_s * 60.0 / (2.0 * math.pi)
+        )
+        left_rpm = round(
+            left_rad_s * 60.0 / (2.0 * math.pi)
+        )
+
+        return self.ep.chassis.drive_wheels(
+            w1=right_rpm,
+            w2=left_rpm,
+            w3=left_rpm,
+            w4=right_rpm,
+            timeout=0.3,
+        )
+        
+    def camera_test(self):
+        aruco = cv2.aruco
+
+        dictionary = aruco.getPredefinedDictionary(
+            aruco.DICT_APRILTAG_36h11
+        )
+
+        if hasattr(aruco, 'ArucoDetector'):
+            detector = aruco.ArucoDetector(
+                dictionary,
+                aruco.DetectorParameters(),
+            )
+            detect = detector.detectMarkers
+        else:
+            params = aruco.DetectorParameters_create()
+            detect = lambda gray: aruco.detectMarkers(
+                gray, dictionary, parameters=params
+            )
+
+        self.video = True
+
+        started = self.ep.camera.start_video_stream(
+            display=False,
+            resolution='720p',
+        )
+
+        if started is False:
+            raise RuntimeError('Camera stream rejected')
+
+        end = time.monotonic() + float(self.p('seconds'))
+        last_frame = time.monotonic()
+        next_tag_report = 0.0
+
+        while rclpy.ok() and time.monotonic() < end:
+            try:
+                frame = self.ep.camera.read_cv2_image(
+                    timeout=0.5,
+                    strategy='newest',
+                )
+            except Empty:
+                frame = None
+
+            if frame is None:
+                if time.monotonic() - last_frame > 5.0:
+                    raise RuntimeError(
+                        'No camera frame for 5 seconds'
+                    )
+
+                time.sleep(0.01)
+                continue
+
+            last_frame = time.monotonic()
+
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            corners, ids, _ = detect(gray)
+
+            found = (
+                [] if ids is None
+                else [int(i) for i in ids.flatten()]
+            )
+
+            if ids is not None:
+                aruco.drawDetectedMarkers(frame, corners, ids)
+
+            target = int(self.p('target_id'))
+
+            text = (
+                f'Tag {target}: FOUND'
+                if target in found
+                else f'Tag {target}: NOT FOUND'
+            )
+
+            color = (
+                (0, 255, 0) if target in found
+                else (0, 0, 255)
+            )
+
+            cv2.putText(
+                frame, text, (20, 35),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8, color, 2,
+            )
+
+            message = self.bridge.cv2_to_imgmsg(
+                frame,
+                encoding='bgr8',
+            )
+            message.header.stamp = (
+                self.get_clock().now().to_msg()
+            )
+            message.header.frame_id = 'ep_camera_optical_frame'
+
+            if rclpy.ok():
+                self.image_pub.publish(message)
+
+            if time.monotonic() >= next_tag_report:
+                self.get_logger().info(
+                    f'{text}. Detected IDs: {found}'
+                )
+                next_tag_report = time.monotonic() + 1.0
+
+            time.sleep(0.01)
+
+    def run(self):
+        mode = self.p('test')
+
+        modes = {
+            'connect', 'sensors', 'camera', 'wheel',
+            'forward', 'turn', 'arm', 'open', 'close',
+            'led', 'speaker',
+        }
+
+        if mode not in modes:
+            raise ValueError(f'Unknown test: {mode}')
+
+        if mode == 'wheel':
+            if int(self.p('wheel')) not in (1, 2, 3, 4):
+                raise ValueError(
+                    'wheel must be 1, 2, 3, or 4'
+                )
+
+        self.connect()
+
+        if mode == 'connect':
+            return
+
+        if mode == 'camera':
+            self.camera_test()
+            return
+
+        self.subscribe_sensors()
+        self.wait(2.0)
+
+        if not rclpy.ok():
+            return
+
+        if mode == 'sensors':
+            self.wait(float(self.p('seconds')))
+
+        
+        elif mode in {'wheel', 'forward', 'turn'}:
+            self.chassis_used = True
+
+            if self.stop_chassis() is False:
+                raise RuntimeError(
+                    'Wheel stop command rejected'
+                )
+
+            if mode == 'wheel':
+                speeds = {
+                    f'w{i}': 0 for i in range(1, 5)
+                }
+                speeds[f'w{int(self.p("wheel"))}'] = 20
+
+                command = lambda: (
+                    self.ep.chassis.drive_wheels(
+                        **speeds,
+                        timeout=0.3,
+                    )
+                )
+
+            elif mode == 'forward':
+                self.get_logger().info(
+                    'FORWARD TEST: all wheels commanded to 20 RPM'
+                )
+
+                command = lambda: (
+                    self.ep.chassis.drive_wheels(
+                        w1=20,
+                        w2=20,
+                        w3=20,
+                        w4=20,
+                        timeout=0.3,
+                    )
+                )
+
+            else:
+                self.get_logger().info(
+                    'TURN TEST: right +20 RPM, left -20 RPM'
+                )
+
+                command = lambda: (
+                    self.ep.chassis.drive_wheels(
+                        w1=20,
+                        w2=-20,
+                        w3=-20,
+                        w4=20,
+                        timeout=0.3,
+                    )
+                )
+                
+
+            self.wait(1.0, command)
+
+            if self.stop_chassis() is False:
+                raise RuntimeError(
+                    'Wheel stop command rejected'
+                )
+
+            self.wait(2.0)
+            
+        elif mode == 'arm':
+            action = self.ep.robotic_arm.moveto(
+                x=105, y=60
+            )
+
+            completed = action.wait_for_completed(
+                timeout=8
+            )
+
+            self.get_logger().info(
+                f'Arm action completed: {completed}'
+            )
+
+            self.wait(3.0)
+
+        elif mode in {'open', 'close'}:
+            self.gripper_used = True
+
+            result = getattr(
+                self.ep.gripper, mode
+            )(power=30)
+
+            if result is False:
+                raise RuntimeError(
+                    'Gripper command rejected'
+                )
+
+            self.wait(1.0)
+            self.ep.gripper.pause()
+            self.wait(2.0)
+
+        elif mode == 'led':
+            colors = [
+                (80, 0, 0),
+                (0, 80, 0),
+                (0, 0, 80),
+            ]
+
+            for color in colors:
+                if not rclpy.ok():
+                    break
+
+                result = self.ep.led.set_led(
+                    comp='bottom_all',
+                    r=color[0],
+                    g=color[1],
+                    b=color[2],
+                    effect='on',
+                )
+
+                if result is False:
+                    raise RuntimeError(
+                        'LED command rejected'
+                    )
+
+                self.wait(1.0)
+
+        elif mode == 'speaker':
+            action = self.ep.play_sound(
+                robot.SOUND_ID_SCANNING
+            )
+            action.wait_for_completed(timeout=5)
+
+    def cleanup(self):
+        actions = []
+
+        if self.connected:
+            if self.chassis_used:
+                actions.append(self.stop_chassis)
+
+            if self.gripper_used:
+                actions.append(self.ep.gripper.pause)
+
+            if self.video:
+                actions.append(
+                    self.ep.camera.stop_video_stream
+                )
+
+            actions.extend(
+                reversed(self.unsubscribers)
+            )
+
+        actions.append(self.ep.close)
+
+        for action in actions:
+            try:
+                action()
+            except Exception as exc:
+                print(f'Cleanup: {exc}', flush=True)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = EPCheck()
+
+    try:
+        node.run()
+
+    except KeyboardInterrupt:
+        pass
+
+    except Exception as exc:
+        node.get_logger().error(str(exc))
+        raise
+
+    finally:
+        node.cleanup()
+        node.destroy_node()
+
+        if rclpy.ok():
+            rclpy.shutdown()
